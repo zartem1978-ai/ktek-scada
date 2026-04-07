@@ -2,25 +2,21 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>КТЭК - СКАДА ДИСПЕТЧЕРА v18</title>
+    <title>КТЭК - СКАДА v19 УМНЫЙ ИМПОРТ</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #e9ecef; margin: 0; padding: 10px; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-size: 11px; }
         .container { background: white; padding: 15px; border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; flex: 1; display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box; }
-        .top-section { flex-shrink: 0; }
         .top-bar { display: flex; justify-content: space-between; align-items: center; background: #003366; color: white; padding: 10px 15px; border-radius: 4px; margin-bottom: 10px; }
         .top-bar h2 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 15px; }
-        .developer-credit { font-size: 10px; color: #a0c4ff; font-weight: normal; opacity: 0.8; letter-spacing: 0.5px; }
         .btn-panel button, .btn-panel label { cursor: pointer; padding: 6px 12px; font-weight: bold; border: 1px solid #ccc; border-radius: 3px; background: #f8f9fa; color: #333; margin-left: 5px; font-size: 11px; display: inline-block; }
-        .btn-print { background: #0277bd !important; color: white !important; border: none !important; }
         .btn-backup { background: #ffc107 !important; color: #000 !important; border: none !important; }
         .btn-import { background: #17a2b8 !important; color: #fff !important; border: none !important; }
         .tabs { display: flex; gap: 5px; margin-bottom: 10px; }
         .tab-btn { padding: 8px 16px; cursor: pointer; border: none; background: #ddd; font-weight: bold; border-radius: 4px 4px 0 0; }
         .tab-btn.active { background: #003366; color: white; }
-        .search-container { margin-bottom: 10px; }
-        .search-input { width: 100%; padding: 8px 15px; font-size: 13px; border: 2px solid #003366; border-radius: 4px; box-sizing: border-box; background: #fff8e1; font-weight: bold; }
+        .search-input { width: 100%; padding: 8px 15px; font-size: 13px; border: 2px solid #003366; border-radius: 4px; box-sizing: border-box; background: #fff8e1; font-weight: bold; margin-bottom: 10px; }
         .input-form { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; background: #f1f8e9; padding: 10px 15px; border: 1px solid #c5e1a5; margin-bottom: 10px; border-radius: 4px; }
         .input-group { display: flex; flex-direction: column; }
         .input-group label { font-weight: bold; margin-bottom: 2px; font-size: 10px; color: #333; }
@@ -29,100 +25,85 @@
         .table-wrapper { flex: 1; overflow: auto; border: 1px solid #6c757d; border-radius: 3px; background: white; }
         table { width: 100%; min-width: 2200px; border-collapse: collapse; }
         th, td { border: 1px solid #6c757d; padding: 4px; text-align: center; font-size: 10px; }
-        th { background: #dee2e6; color: #212529; position: sticky; top: 0; z-index: 10; height: 35px; }
+        th { background: #dee2e6; position: sticky; top: 0; z-index: 10; height: 35px; }
         .tag-opres { background: #e3f2fd; color: #1565c0; font-weight: bold; border: 1px solid #1565c0; padding: 1px 3px; border-radius: 3px; font-size: 9px; }
         .btn-photo { background: #0288d1; color: white; border: none; padding: 3px 6px; cursor: pointer; border-radius: 3px; font-size: 9px; font-weight: bold; }
         #photo-viewer { position: fixed; top:5%; left:5%; width:90%; height:90%; background: white; z-index: 18000; display: none; border: 3px solid #003366; padding: 15px; overflow-y: auto; }
         .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-        .photo-grid img { width: 100%; border-radius: 5px; border: 1px solid #ddd; }
-        /* Аналитика */
-        .analytics-section { margin-bottom: 20px; background: white; padding: 15px; border-radius: 5px; border: 1px solid #ddd; }
-        .analytics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        .photo-grid img { width: 100%; border-radius: 5px; }
+        .analytics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
         .stat-card { background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 5px solid #003366; }
         .stat-card .value { font-size: 20px; font-weight: bold; color: #003366; }
-        .chart-box { background: white; padding: 15px; border-radius: 5px; border: 1px solid #ccc; max-height: 250px; overflow-y: auto; }
-        .chart-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #eee; }
     </style>
 </head>
 <body>
 
 <div id="photo-viewer">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3 id="photo-title">Фотоматериалы объекта</h3>
+        <h3>Фотоматериалы объекта</h3>
         <button onclick="closePhotos()" style="background:red; color:white; border:none; padding:10px; cursor:pointer;">ЗАКРЫТЬ</button>
     </div>
-    <div id="upload-zone" style="margin:15px 0; padding:10px; background:#eee;">
-        <label>📸 Добавить фото: </label><input type="file" id="file-input" accept="image/*" onchange="uploadPhoto()">
-    </div>
+    <div id="upload-zone" style="margin:15px 0; padding:10px; background:#eee;"><label>📸 Добавить фото: </label><input type="file" id="file-input" accept="image/*" onchange="uploadPhoto()"></div>
     <div class="photo-grid" id="photo-display"></div>
 </div>
 
 <div class="container">
-    <div class="top-section">
-        <div class="top-bar no-print">
-            <h2>🦾 КТЭК — СКАДА ДИСПЕТЧЕРА <span class="developer-credit">Разработано: Зиненко А.В.</span></h2>
-            <div class="btn-panel">
-                <button class="btn-print" onclick="window.print()">🖨️ ПЕЧАТЬ</button>
-                <button class="btn-backup" onclick="exportDB()">💾 БЭКАП БАЗЫ</button>
-                <label class="btn-import">📂 ИМПОРТ<input type="file" accept=".json" style="display:none" onchange="importDB(event)"></label>
-            </div>
+    <div class="top-bar">
+        <h2>🦾 КТЭК — СКАДА <span class="developer-credit">Зиненко А.В.</span></h2>
+        <div class="btn-panel">
+            <button class="btn-backup" onclick="exportDB()">💾 БЭКАП БАЗЫ</button>
+            <label class="btn-import">📂 ИМПОРТ<input type="file" accept=".json" style="display:none" onchange="importSmart(event)"></label>
+            <button onclick="location.reload()">🔄 ОБНОВИТЬ</button>
         </div>
+    </div>
 
-        <div class="tabs no-print">
-            <button class="tab-btn active" onclick="switchTab('act')">⚠️ ТЕКУЩИЕ (<span id="c-act">0</span>)</button>
-            <button class="tab-btn" onclick="switchTab('kap')">🚧 КАП. РЕМОНТ (<span id="c-kap">0</span>)</button>
-            <button class="tab-btn" onclick="switchTab('cls')">✅ АРХИВ (<span id="c-cls">0</span>)</button>
-            <button class="tab-btn" onclick="switchTab('stat')" style="background:#0277bd; color:white; margin-left:20px;">📊 АНАЛИТИКА</button>
-        </div>
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('act')">⚠️ ТЕКУЩИЕ (<span id="c-act">0</span>)</button>
+        <button class="tab-btn" onclick="switchTab('kap')">🚧 КАП. РЕМОНТ (<span id="c-kap">0</span>)</button>
+        <button class="tab-btn" onclick="switchTab('cls')">✅ АРХИВ (<span id="c-cls">0</span>)</button>
+        <button class="tab-btn" onclick="switchTab('stat')" style="background:#0277bd; color:white; margin-left:20px;">📊 АНАЛИТИКА</button>
+    </div>
 
-        <div class="search-container no-print" id="search-block">
-            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Умный поиск: адрес, ТК, мастер, характер..." oninput="loadData()">
-        </div>
-
-        <div class="input-form no-print" id="input-block">
+    <div id="ui-main">
+        <input type="text" id="searchInput" class="search-input" placeholder="🔍 Умный поиск..." oninput="renderLocal()">
+        
+        <div class="input-form" id="input-block">
             <div class="input-group"><label>Источник:</label><select id="v2"><option>ТЭЦ</option><option>ТЭЦ-2</option><option>РК-3</option><option>К-2</option><option>К-3</option></select></div>
             <div class="input-group"><label>Участок:</label><select id="v4"><option>Ц-1</option><option>Ц-3</option><option>МС</option><option>КЖБИ</option><option>КСК</option></select></div>
             <div class="input-group"><label>Диаметр:</label><input type="text" id="v-diam"></div>
-            <div class="input-group"><label>Отпайка (ТК):</label><input type="text" id="v3"></div>
+            <div class="input-group"><label>ТК / Отпайка:</label><input type="text" id="v3"></div>
             <div class="input-group"><label>Обнаружено:</label><input type="datetime-local" id="v5"></div>
             <div class="input-group"><label>Адрес:</label><input type="text" id="v7"></div>
             <div class="input-group"><label>Характер:</label><input type="text" id="v8"></div>
             <div class="input-group"><label>Примечание:</label><input type="text" id="v9"></div>
-            <div class="input-group"><label>Домов (шт):</label><input type="number" id="v10"></div>
+            <div class="input-group"><label>Домов:</label><input type="number" id="v10"></div>
             <div class="input-group"><label>Соц. объекты:</label><input type="text" id="v11"></div>
             <div class="input-group"><label>Юр. лица:</label><input type="text" id="v12"></div>
             <div class="input-group"><label>План (дата):</label><input type="date" id="v13"></div>
             <div class="input-group"><label>Срок (план):</label><input type="text" id="v14"></div>
-            <div class="input-group"><label>Факт устранение:</label><input type="datetime-local" id="v15"></div>
+            <div class="input-group"><label>Факт:</label><input type="datetime-local" id="v15"></div>
             <div class="input-group"><label>Кто обнаружил:</label><input type="text" id="v17"></div>
             <div class="input-group"><label>Кто устранил:</label><input type="text" id="v18"></div>
             <div class="input-group" style="flex-direction:row; align-items:center; gap:5px;"><input type="checkbox" id="is-opres"> <label>ОПРЕССОВКА</label></div>
-            <button id="main-btn" class="btn-add" onclick="saveEntry()">+ ДОБАВИТЬ НОВУЮ ЗАПИСЬ</button>
+            <button class="btn-add" onclick="saveEntry()">+ ДОБАВИТЬ В ОБЛАКО</button>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>№ ID</th><th>Ист.</th><th>ТК</th><th>Уч.</th><th>Диам.</th><th>Обнаруж.</th><th>Адрес</th><th>Характер</th><th>Дома</th><th>Соц.</th><th>Юр.</th><th>План</th><th>Срок</th><th>Факт</th><th>Фото</th><th>Действия</th></tr>
+                </thead>
+                <tbody id="tb-body"></tbody>
+            </table>
         </div>
     </div>
 
-    <div id="tab-tables" class="table-wrapper">
-        <table>
-            <thead>
-                <tr><th>№ ID</th><th>Ист.</th><th>ТК</th><th>Уч.</th><th>Диам.</th><th>Обнаруж.</th><th>Адрес</th><th>Характер</th><th>Дома</th><th>Соц.</th><th>Юр.</th><th>План</th><th>Срок</th><th>Факт</th><th>Фото</th><th>Действия</th></tr>
-            </thead>
-            <tbody id="tb-body"></tbody>
-        </table>
-    </div>
-
-    <div id="tab-stat" class="tab-content" style="overflow-y:auto; padding:10px;">
-        <div class="analytics-section">
-            <h3 style="color:#d32f2f;">⚠️ ОПЕРАТИВНАЯ СВОДКА</h3>
-            <div class="analytics-grid">
-                <div class="stat-card"><h4>В работе</h4><div class="value" id="s-act">0</div></div>
-                <div class="stat-card"><h4>Отключено домов</h4><div class="value" id="s-houses">0</div></div>
-                <div class="stat-card"><h4>Опрессовка</h4><div class="value" id="s-opres">0</div></div>
-                <div class="stat-card"><h4>Устранено всего</h4><div class="value" id="s-cls">0</div></div>
-            </div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
-                <div class="chart-box"><h4>По Участкам</h4><div id="c-uch"></div></div>
-                <div class="chart-box"><h4>По Мастерам</h4><div id="c-mast"></div></div>
-            </div>
+    <div id="ui-stat" style="display:none; overflow-y:auto; padding:10px;">
+        <div class="analytics-grid">
+            <div class="stat-card"><h4>В работе</h4><div class="value" id="s-act">0</div></div>
+            <div class="stat-card"><h4>Отключено домов</h4><div class="value" id="s-houses">0</div></div>
+            <div class="stat-card"><h4>Опрессовка</h4><div class="value" id="s-opres">0</div></div>
+            <div class="stat-card"><h4>Устранено</h4><div class="value" id="s-cls">0</div></div>
         </div>
     </div>
 </div>
@@ -131,7 +112,26 @@
     const firebaseConfig = { databaseURL: "https://ktek-scada-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const rdb = firebase.database();
-    let currentTab = 'act', photoId = null;
+    let currentTab = 'act', photoId = null, fullData = {};
+
+    function importSmart(event) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = e => {
+            try {
+                const raw = JSON.parse(e.target.result);
+                let toUpload = {};
+                // Умная проверка: если это старый формат со списками act/cls/kap
+                if (raw.act || raw.cls || raw.kap) {
+                    if(raw.act) raw.act.forEach(i => { i.status='act'; toUpload[i.id || Date.now()+Math.random()] = i; });
+                    if(raw.kap) raw.kap.forEach(i => { i.status='kap'; toUpload[i.id || Date.now()+Math.random()] = i; });
+                    if(raw.cls) raw.cls.forEach(i => { i.status='cls'; toUpload[i.id || Date.now()+Math.random()] = i; });
+                } else { toUpload = raw; }
+                rdb.ref('poryvy').update(toUpload).then(() => alert("✅ Архив 'Джонс' успешно загружен в облако!"));
+            } catch(err) { alert("Ошибка формата файла!"); }
+        };
+        reader.readAsText(file);
+    }
 
     function saveEntry() {
         const id = Date.now();
@@ -147,65 +147,57 @@
             v18: document.getElementById('v18').value, diam: document.getElementById('v-diam').value,
             isOpres: document.getElementById('is-opres').checked
         };
-        rdb.ref('poryvy/' + id).set(data).then(() => { alert("Запись добавлена!"); location.reload(); });
+        rdb.ref('poryvy/' + id).set(data);
     }
 
     function loadData() {
-        const query = document.getElementById('searchInput').value.toLowerCase();
         rdb.ref('poryvy').on('value', s => {
-            const data = s.val() || {};
-            const body = document.getElementById('tb-body'); body.innerHTML = '';
-            let c = {act:0, kap:0, cls:0, houses:0, opres:0, uch:{}, mast:{}};
-            
-            Object.values(data).sort((a,b) => b.id - a.id).forEach(item => {
-                const searchStr = `${item.v7} ${item.v3} ${item.v18} ${item.v8}`.toLowerCase();
-                if(query && !searchStr.includes(query)) return;
-
-                c[item.status]++;
-                if(item.status === 'act') {
-                    c.houses += parseInt(item.v10 || 0);
-                    if(item.isOpres) c.opres++;
-                }
-                if(item.status === 'cls') {
-                    let m = item.v18 || 'Не указан';
-                    c.mast[m] = (c.mast[m] || 0) + 1;
-                }
-                let u = item.v4 || '---';
-                c.uch[u] = (c.uch[u] || 0) + 1;
-
-                if(item.status !== currentTab) return;
-
-                const row = `<tr>
-                    <td>${String(item.id).slice(-4)}</td><td>${item.v2}</td><td>${item.v3}</td><td>${item.v4}</td><td>${item.diam||''}</td>
-                    <td>${(item.v5||'').replace('T',' ')}</td><td style="text-align:left"><b>${item.v7}</b> ${item.isOpres?'<span class="tag-opres">ОПРЕССОВКА</span>':''}</td>
-                    <td>${item.v8}</td><td>${item.v10}</td><td>${item.v11}</td><td>${item.v12}</td><td>${item.v13}</td><td>${item.v14}</td>
-                    <td>${(item.v15||'').replace('T',' ')}</td>
-                    <td><button class="btn-photo" onclick="openPhotos('${item.id}')">📸 (${item.photos?Object.keys(item.photos).length:0})</button></td>
-                    <td><button onclick="upd('${item.id}','${currentTab==='act'?'cls':'act'}')">${currentTab==='act'?'✅':'↩️'}</button></td>
-                </tr>`;
-                body.insertAdjacentHTML('beforeend', row);
-            });
-            updateStats(c);
+            fullData = s.val() || {};
+            renderLocal();
         });
+    }
+
+    function renderLocal() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const body = document.getElementById('tb-body'); body.innerHTML = '';
+        let c = {act:0, kap:0, cls:0, houses:0, opres:0};
+        
+        Object.values(fullData).sort((a,b) => b.id - a.id).forEach(item => {
+            const searchStr = `${item.v7} ${item.v3} ${item.v18} ${item.v8}`.toLowerCase();
+            if(query && !searchStr.includes(query)) return;
+
+            c[item.status]++;
+            if(item.status === 'act') {
+                c.houses += parseInt(item.v10 || 0);
+                if(item.isOpres) c.opres++;
+            }
+            if(item.status !== currentTab) return;
+
+            const row = `<tr>
+                <td>${String(item.id).slice(-4)}</td><td>${item.v2}</td><td>${item.v3}</td><td>${item.v4}</td><td>${item.diam||''}</td>
+                <td>${(item.v5||'').replace('T',' ')}</td><td style="text-align:left"><b>${item.v7}</b> ${item.isOpres?'<span class="tag-opres">ОПРЕССОВКА</span>':''}</td>
+                <td>${item.v8}</td><td>${item.v10}</td><td>${item.v11}</td><td>${item.v12}</td><td>${item.v13}</td><td>${item.v14}</td>
+                <td>${(item.v15||'').replace('T',' ')}</td>
+                <td><button class="btn-photo" onclick="openPhotos('${item.id}')">📸 (${item.photos?Object.keys(item.photos).length:0})</button></td>
+                <td><button onclick="upd('${item.id}','${currentTab==='act'?'cls':'act'}')">${currentTab==='act'?'✅':'↩️'}</button></td>
+            </tr>`;
+            body.insertAdjacentHTML('beforeend', row);
+        });
+        updateStats(c);
     }
 
     function updateStats(c) {
         document.getElementById('c-act').innerText = c.act; document.getElementById('c-kap').innerText = c.kap; document.getElementById('c-cls').innerText = c.cls;
         document.getElementById('s-act').innerText = c.act; document.getElementById('s-houses').innerText = c.houses; document.getElementById('s-opres').innerText = c.opres; document.getElementById('s-cls').innerText = c.cls;
-        
-        let uchHtml = ''; Object.keys(c.uch).forEach(k => uchHtml += `<div class="chart-row"><span>${k}</span><b>${c.uch[k]}</b></div>`);
-        document.getElementById('c-uch').innerHTML = uchHtml;
-        let mastHtml = ''; Object.keys(c.mast).forEach(k => mastHtml += `<div class="chart-row"><span>${k}</span><b>${c.mast[k]}</b></div>`);
-        document.getElementById('c-mast').innerHTML = mastHtml;
     }
 
     function upd(id, st) { rdb.ref('poryvy/'+id).update({status:st}); }
     function switchTab(t) {
         currentTab = t; document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         if(event) event.target.classList.add('active');
-        document.getElementById('tab-stat').style.display = (t==='stat')?'block':'none';
-        document.getElementById('tab-tables').style.display = (t==='stat')?'none':'block';
-        loadData();
+        document.getElementById('ui-stat').style.display = (t==='stat')?'block':'none';
+        document.getElementById('ui-main').style.display = (t==='stat')?'none':'block';
+        renderLocal();
     }
     function openPhotos(id) { photoId = id; document.getElementById('photo-viewer').style.display = 'block'; rdb.ref('poryvy/'+id+'/photos').on('value', s => {
         const grid = document.getElementById('photo-display'); grid.innerHTML = '';
@@ -214,7 +206,6 @@
     function uploadPhoto() { const file = document.getElementById('file-input').files[0]; const reader = new FileReader(); reader.onload = e => rdb.ref('poryvy/'+photoId+'/photos').push(e.target.result); reader.readAsDataURL(file); }
     function closePhotos() { document.getElementById('photo-viewer').style.display = 'none'; }
     function exportDB() { rdb.ref('poryvy').once('value').then(s => { const blob = new Blob([JSON.stringify(s.val(), null, 2)], {type: "application/json"}); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `KTEK_BACKUP_${new Date().toLocaleDateString()}.json`; a.click(); }); }
-    function importDB(event) { const file = event.target.files[0]; const reader = new FileReader(); reader.onload = e => { const data = JSON.parse(e.target.result); rdb.ref('poryvy').set(data); alert("База загружена!"); }; reader.readAsText(file); }
 
     loadData();
 </script>
