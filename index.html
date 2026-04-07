@@ -2,23 +2,17 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>КТЭК - СКАДА v14 БРОНЯ</title>
+    <title>КТЭК - СКАДА v15 СВОБОДНАЯ</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #e9ecef; margin: 0; padding: 10px; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-size: 11px; }
         .container { background: white; padding: 15px; border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        
         .top-bar { display: flex; justify-content: space-between; align-items: center; background: #003366; color: white; padding: 10px 15px; border-radius: 4px; margin-bottom: 10px; }
         
-        /* Авторизация */
         .login-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: #003366; z-index: 20000; display: flex; justify-content: center; align-items: center; }
         .login-box { background: white; padding: 30px; border-radius: 10px; text-align: center; color: #333; }
         .login-box input { padding: 10px; width: 200px; border: 2px solid #003366; border-radius: 5px; font-size: 16px; margin-bottom: 15px; text-align: center; }
-
-        /* Блокировка Джонса */
-        #backup-lock { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(211,47,47,0.98); z-index: 15000; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; }
-        .btn-big { padding: 20px 40px; font-size: 22px; background: white; color: #d32f2f; border: none; cursor: pointer; font-weight: bold; border-radius: 10px; z-index: 16000; position: relative; }
 
         .btn-panel button, .btn-panel label { cursor: pointer; padding: 6px 12px; font-weight: bold; border: none; border-radius: 3px; background: #f8f9fa; color: #333; margin-left: 5px; font-size: 11px; }
         .btn-backup { background: #ffc107 !important; }
@@ -49,17 +43,11 @@
 
 <div id="login-screen" class="login-overlay">
     <div class="login-box">
-        <h2>🦾 КТЭК СКАДА v14</h2>
+        <h2>🦾 КТЭК СКАДА v15</h2>
         <input type="password" id="pass-field" placeholder="Пароль">
         <br>
         <button onclick="checkAuth()" style="padding: 10px 20px; background: #003366; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">ВОЙТИ</button>
     </div>
-</div>
-
-<div id="backup-lock">
-    <h1>⚠️ ВНИМАНИЕ! НУЖЕН БЭКАП</h1>
-    <p style="font-size: 18px; margin-bottom: 20px;">Прошло 12 часов. Сохраните "Джонса" для почты!</p>
-    <button class="btn-big" onclick="exportDB(true)">💾 СКАЧАТЬ АРХИВ (JSON)</button>
 </div>
 
 <div id="photo-viewer">
@@ -77,7 +65,7 @@
     <div class="top-bar">
         <div><b>КТЭК СКАДА</b> | Роль: <span id="u-role">---</span></div>
         <div class="btn-panel">
-            <button class="btn-backup" onclick="exportDB()">💾 БЭКАП</button>
+            <button class="btn-backup" onclick="exportDB()">💾 БЭКАП (ДЖОНС)</button>
             <label class="btn-import">📂 ИМПОРТ<input type="file" accept=".json" style="display:none" onchange="importToFirebase(event)"></label>
             <button onclick="location.reload()">🔄 ОБНОВИТЬ</button>
         </div>
@@ -138,25 +126,16 @@
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('u-role').innerText = currentUser.toUpperCase();
         if(currentUser === 'master') document.getElementById('input-block').style.display = 'none';
-        
-        const last = localStorage.getItem('last_j_backup') || 0;
-        if(Date.now() - last > 12 * 3600000 && currentUser !== 'master') {
-            document.getElementById('backup-lock').style.display = 'flex';
-        }
         loadData();
     }
 
-    function exportDB(isForced = false) {
+    function exportDB() {
         rdb.ref('poryvy').once('value').then(s => {
             const blob = new Blob([JSON.stringify(s.val(), null, 2)], {type: "application/json"});
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
-            a.download = `KTEK_V14_${new Date().toLocaleDateString()}.json`;
+            a.download = `KTEK_BACKUP_${new Date().toLocaleDateString()}.json`;
             a.click();
-            if(isForced) {
-                localStorage.setItem('last_j_backup', Date.now());
-                document.getElementById('backup-lock').style.display = 'none';
-            }
         });
     }
 
@@ -166,7 +145,7 @@
         reader.onload = e => {
             const data = JSON.parse(e.target.result);
             rdb.ref('poryvy').set(data);
-            alert("База загружена в Firebase!");
+            alert("База успешно загружена!");
         };
         reader.readAsText(file);
     }
@@ -185,7 +164,10 @@
             v18: document.getElementById('v18').value,
             isOpres: document.getElementById('is-opres').checked
         };
-        rdb.ref('poryvy/' + id).set(data);
+        rdb.ref('poryvy/' + id).set(data).then(() => {
+            document.querySelectorAll('.input-form input').forEach(i => { if(i.type !== 'checkbox') i.value = ''; });
+            alert("Запись в облаке!");
+        });
     }
 
     function loadData() {
@@ -194,7 +176,6 @@
             const body = document.getElementById('tb-body');
             body.innerHTML = '';
             let c = {act:0, kap:0, cls:0};
-            
             Object.values(data).reverse().forEach(item => {
                 c[item.status]++;
                 if(item.status !== currentTab) return;
