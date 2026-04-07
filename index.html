@@ -2,286 +2,238 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>КТЭК - СКАДА ОНЛАЙН v12</title>
+    <title>КТЭК - СКАДА ДИСПЕТЧЕРА v13</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #e9ecef; margin: 0; padding: 10px; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; font-size: 11px; }
-        .container { background: white; padding: 15px; border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #e9ecef; margin: 0; padding: 10px; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-size: 11px; }
+        .container { background: white; padding: 15px; border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; flex: 1; display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box; }
+        .top-section { flex-shrink: 0; }
         .top-bar { display: flex; justify-content: space-between; align-items: center; background: #003366; color: white; padding: 10px 15px; border-radius: 4px; margin-bottom: 10px; }
-        .status-dot { width: 10px; height: 10px; background: #4caf50; border-radius: 50%; display: inline-block; margin-right: 5px; box-shadow: 0 0 5px #4caf50; }
+        .top-bar h2 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 15px; }
+        .developer-credit { font-size: 10px; color: #a0c4ff; font-weight: normal; opacity: 0.8; }
         
-        .login-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,51,102,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; }
-        .login-box { background: white; padding: 30px; border-radius: 10px; color: #333; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .login-box input { padding: 10px; width: 200px; border: 2px solid #003366; border-radius: 5px; margin-bottom: 10px; font-size: 16px; text-align: center; }
+        /* Авторизация */
+        .login-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,51,102,0.98); z-index: 10000; display: flex; justify-content: center; align-items: center; color: white; }
+        .login-box { background: white; padding: 30px; border-radius: 10px; color: #333; text-align: center; }
+        .login-box input { padding: 10px; width: 200px; border: 2px solid #003366; border-radius: 5px; font-size: 16px; margin-bottom: 10px; text-align: center; }
+
+        .btn-panel button, .btn-panel label { cursor: pointer; padding: 6px 12px; font-weight: bold; border: 1px solid #ccc; border-radius: 3px; background: #f8f9fa; color: #333; margin-left: 5px; font-size: 11px; }
+        .btn-backup { background: #ffc107 !important; color: #000 !important; border: none !important; }
         
-        .btn-panel button { cursor: pointer; padding: 6px 12px; font-weight: bold; border: none; border-radius: 3px; margin-left: 5px; }
-        .btn-backup { background: #f57c00 !important; color: white; }
-        .btn-photo { background: #0288d1; color: white; padding: 3px 6px; font-size: 9px; border-radius: 3px; cursor: pointer; }
-        
-        .input-form { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; background: #f1f8e9; padding: 10px; border: 1px solid #c5e1a5; margin-bottom: 10px; border-radius: 4px; }
-        .input-group label { font-weight: bold; margin-bottom: 2px; font-size: 10px; color: #333; }
-        .input-form input, .input-form select { width: 100%; padding: 4px; border: 1px solid #999; border-radius: 3px; font-size: 11px; }
-        
-        .table-wrapper { flex: 1; overflow: auto; border: 1px solid #6c757d; }
-        table { width: 100%; min-width: 2200px; border-collapse: collapse; }
-        th { background: #dee2e6; position: sticky; top: 0; z-index: 10; padding: 8px; border: 1px solid #6c757d; }
-        td { padding: 5px; border: 1px solid #ccc; text-align: center; }
-        
-        .tag-opres { background: #e3f2fd; color: #1565c0; font-weight: bold; padding: 2px 4px; border-radius: 3px; border: 1px solid #1565c0; font-size: 9px; }
-        .modal-backup { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(211,47,47,0.9); z-index: 10000; display: none; justify-content: center; align-items: center; text-align: center; color: white; }
-        
-        .tabs { display: flex; gap: 5px; margin-bottom: 5px; }
-        .tab-btn { padding: 8px 15px; cursor: pointer; border: none; background: #ccc; font-weight: bold; }
+        .tabs { display: flex; gap: 5px; margin-bottom: 10px; }
+        .tab-btn { padding: 8px 16px; cursor: pointer; border: none; background: #ddd; font-weight: bold; border-radius: 4px 4px 0 0; }
         .tab-btn.active { background: #003366; color: white; }
+
+        .input-form { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; background: #f1f8e9; padding: 10px 15px; border: 1px solid #c5e1a5; margin-bottom: 10px; border-radius: 4px; }
+        .input-group { display: flex; flex-direction: column; }
+        .input-group label { font-weight: bold; margin-bottom: 2px; font-size: 10px; }
+        .input-form input, .input-form select { width: 100%; padding: 5px; border: 1px solid #999; font-size: 11px; border-radius: 3px; }
         
-        #photo-viewer { position: fixed; top:10%; left:10%; width:80%; height:80%; background: white; z-index: 10001; display: none; border: 5px solid #003366; padding: 20px; overflow-y: auto; }
-        .photo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
-        .photo-grid img { width: 100%; border-radius: 5px; border: 1px solid #ddd; }
+        .table-wrapper { flex: 1; overflow: auto; border: 1px solid #6c757d; background: white; }
+        table { width: 100%; min-width: 2000px; border-collapse: collapse; }
+        th, td { border: 1px solid #6c757d; padding: 4px; text-align: center; font-size: 10px; }
+        th { background: #dee2e6; position: sticky; top: 0; z-index: 10; }
+        
+        .btn-photo { background: #0288d1; color: white; border: none; padding: 3px 6px; cursor: pointer; font-size: 9px; border-radius: 3px; font-weight: bold; }
+        .tag-opres { background: #e3f2fd; color: #1565c0; font-weight: bold; border: 1px solid #1565c0; padding: 1px 3px; border-radius: 3px; font-size: 9px; }
+
+        /* Блокировка Джонса */
+        #backup-lock { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(211,47,47,0.95); z-index: 11000; display: none; justify-content: center; align-items: center; text-align: center; color: white; }
+        
+        #photo-viewer { position: fixed; top:5%; left:5%; width:90%; height:90%; background: white; z-index: 12000; display: none; border: 3px solid #003366; padding: 15px; overflow-y: auto; }
+        .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+        .photo-grid img { width: 100%; border-radius: 5px; }
     </style>
 </head>
 <body>
 
 <div id="login-screen" class="login-overlay">
     <div class="login-box">
-        <h2 style="margin-top:0">🔐 КТЭК СКАДА: ВХОД</h2>
-        <input type="password" id="pass-field" placeholder="Введите пароль">
+        <h2 style="margin-top:0">🔐 КТЭК СКАДА v13</h2>
+        <input type="password" id="pass-field" placeholder="Пароль">
         <br>
-        <button onclick="checkAuth()" style="padding: 10px 20px; background: #003366; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">ВОЙТИ В СИСТЕМУ</button>
-        <p style="font-size: 11px; color: #666; margin-top: 15px;">admin / disp / master (2026)</p>
+        <button onclick="checkAuth()" style="padding: 10px 20px; background: #003366; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 5px;">ВОЙТИ</button>
     </div>
 </div>
 
-<div id="backup-lock" class="modal-backup">
+<div id="backup-lock">
     <div>
-        <h1>⚠️ СИСТЕМА ЗАБЛОКИРОВАНА!</h1>
-        <p style="font-size: 20px;">База данных обновлена. По регламенту Зиненко А.В. необходимо скачать архив "Джонса" и отправить на почту!</p>
-        <button onclick="forceBackup()" style="padding: 20px 40px; font-size: 24px; background: white; color: #d32f2f; border: none; border-radius: 10px; cursor: pointer; font-weight: bold;">💾 СКАЧАТЬ АРХИВ (JSON)</button>
+        <h1>⚠️ ТРЕБУЕТСЯ БЭКАП "ДЖОНС"</h1>
+        <p style="font-size: 18px;">Прошло более 12 часов. Скачайте архив для отправки на почту!</p>
+        <button onclick="exportDB(true)" style="padding: 20px 40px; font-size: 20px; background: white; color: #d32f2f; border: none; cursor: pointer; font-weight: bold; border-radius: 10px;">💾 СКАЧАТЬ ДЛЯ ПОЧТЫ</button>
     </div>
 </div>
 
 <div id="photo-viewer">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-        <h2 id="photo-title">Фото порыва</h2>
-        <button onclick="closePhotos()" style="padding: 10px; background: red; color: white; border: none; cursor: pointer;">ЗАКРЫТЬ</button>
+    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+        <h3 id="photo-title">Фотоматериалы</h3>
+        <button onclick="closePhotos()" style="background:red; color:white; border:none; padding:10px; cursor:pointer;">❌ ЗАКРЫТЬ</button>
     </div>
-    <div id="photo-upload-zone" style="margin-bottom: 20px; padding: 15px; background: #f1f1f1; border-radius: 5px;">
-        <label>📸 Добавить фото (макс 10): </label>
+    <div id="upload-sec" style="margin-bottom:15px; padding:10px; background:#f0f0f0;">
+        <label>📸 Добавить фото: </label>
         <input type="file" id="file-input" accept="image/*" onchange="uploadPhoto()">
     </div>
     <div class="photo-grid" id="photo-display"></div>
 </div>
 
 <div class="container">
-    <div class="top-bar">
-        <div><span class="status-dot"></span> <b>КТЭК СКАДА ОНЛАЙН v12</b> | <span id="user-role">Гость</span></div>
-        <div class="btn-panel">
-            <button class="btn-backup" id="btn-main-backup" onclick="forceBackup()">💾 БЭКАП НА ПОЧТУ</button>
-            <button onclick="location.reload()" style="background: #ddd;">🔄 ОБНОВИТЬ</button>
+    <div class="top-section">
+        <div class="top-bar">
+            <h2>🦾 КТЭК — СКАДА <span id="u-role">v13</span> <span class="developer-credit">Разработка: Зиненко А.В.</span></h2>
+            <div class="btn-panel">
+                <button class="btn-backup" onclick="exportDB()">💾 БЭКАП БАЗЫ</button>
+                <button onclick="location.reload()">🔄 ОБНОВИТЬ</button>
+            </div>
         </div>
-    </div>
 
-    <div class="tabs" id="ui-tabs">
-        <button class="tab-btn active" onclick="switchTab('act')">⚠️ ТЕКУЩИЕ (<span id="c-act">0</span>)</button>
-        <button class="tab-btn" onclick="switchTab('kap')">🚧 КАП. РЕМОНТ (<span id="c-kap">0</span>)</button>
-        <button class="tab-btn" onclick="switchTab('cls')">✅ АРХИВ (<span id="c-cls">0</span>)</button>
-    </div>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('act')">⚠️ ТЕКУЩИЕ (<span id="c-act">0</span>)</button>
+            <button class="tab-btn" onclick="switchTab('kap')">🚧 КАП. РЕМОНТ (<span id="c-kap">0</span>)</button>
+            <button class="tab-btn" onclick="switchTab('cls')">✅ АРХИВ (<span id="c-cls">0</span>)</button>
+        </div>
 
-    <div class="input-form" id="input-block" style="display: none;">
-        <div class="input-group"><label>Источник:</label>
-            <select id="v2"><option value="ТЭЦ">ТЭЦ</option><option value="ТЭЦ-2">ТЭЦ-2</option><option value="РК-3">РК-3</option><option value="К-2">К-2</option><option value="К-3">К-3</option></select>
+        <div class="input-form" id="input-block">
+            <div class="input-group"><label>Источник:</label>
+                <select id="v2"><option value="ТЭЦ">ТЭЦ</option><option value="ТЭЦ-2">ТЭЦ-2</option><option value="РК-3">РК-3</option><option value="К-2">К-2</option><option value="К-3">К-3</option></select>
+            </div>
+            <div class="input-group"><label>Участок:</label>
+                <select id="v4"><option value="Ц-1">Ц-1</option><option value="Ц-3">Ц-3</option><option value="МС">МС</option><option value="КЖБИ">КЖБИ</option><option value="КСК">КСК</option></select>
+            </div>
+            <div class="input-group"><label>Отпайка (ТК):</label><input type="text" id="v3"></div>
+            <div class="input-group"><label>Обнаружено:</label><input type="datetime-local" id="v5"></div>
+            <div class="input-group"><label>Адрес:</label><input type="text" id="v7" placeholder="Костанай..."></div>
+            <div class="input-group"><label>Характер:</label><input type="text" id="v8"></div>
+            <div class="input-group"><label>Примечание:</label><input type="text" id="v9"></div>
+            <div class="input-group"><label>Домов (шт):</label><input type="number" id="v10"></div>
+            <div class="input-group"><label>Соц. объекты:</label><input type="text" id="v11"></div>
+            <div class="input-group"><label>Юр. лица:</label><input type="text" id="v12"></div>
+            <div class="input-group"><label>План (дата):</label><input type="date" id="v13"></div>
+            <div class="input-group"><label>Срок (план):</label><input type="text" id="v14"></div>
+            <div class="input-group"><label>Факт устранение:</label><input type="datetime-local" id="v15"></div>
+            <div class="input-group"><label>Кто обнаружил:</label><input type="text" id="v17"></div>
+            <div class="input-group"><label>Кто устранил:</label><input type="text" id="v18"></div>
+            <div class="input-group" style="flex-direction:row; align-items:center; gap:5px;">
+                <input type="checkbox" id="is-opres" style="width:20px;"> <label>ОПРЕССОВКА</label>
+            </div>
+            <button onclick="saveEntry()" class="tab-btn" style="grid-column: span 6; background:#2e7d32; color:white;">+ ДОБАВИТЬ НОВУЮ ЗАПИСЬ</button>
         </div>
-        <div class="input-group"><label>Участок:</label>
-            <select id="v4"><option value="Ц-1">Ц-1</option><option value="Ц-3">Ц-3</option><option value="МС">МС</option><option value="КЖБИ">КЖБИ</option><option value="КСК">КСК</option></select>
-        </div>
-        <div class="input-group"><label>ТК / Отпайка:</label><input type="text" id="v3"></div>
-        <div class="input-group"><label>Обнаружено:</label><input type="datetime-local" id="v5"></div>
-        <div class="input-group"><label>Адрес (Костанай):</label>
-            <input list="streets" id="v7" placeholder="Начните вводить...">
-            <datalist id="streets">
-                <option value="пр. Абая">
-                <option value="ул. Тауелсиздик">
-                <option value="ул. Аль-Фараби">
-                <option value="ул. Тобыла">
-                <option value="ул. Каирбекова">
-                <option value="ул. Бородина">
-                <option value="ул. Герцена">
-                <option value="ул. Мауленова">
-            </datalist>
-        </div>
-        <div class="input-group"><label>Характер:</label><input type="text" id="v8"></div>
-        <div class="input-group"><label>В план на:</label><input type="date" id="v13"></div>
-        <div class="input-group"><label>Срок (дедлайн):</label><input type="date" id="v14"></div>
-        <div class="input-group"><label>Домов (шт):</label><input type="number" id="v10"></div>
-        <div class="input-group" style="flex-direction: row; align-items: center; gap: 5px; grid-column: span 1;">
-            <input type="checkbox" id="v-opres" style="width: 20px;"> <label>ОПРЕССОВКА</label>
-        </div>
-        <div class="input-group" style="grid-column: span 2;"><label>Примечание:</label><input type="text" id="v9"></div>
-        <button onclick="saveEntry()" style="grid-column: span 6; padding: 10px; background: #2e7d32; color: white; border: none; cursor: pointer; font-weight: bold;">+ ДОБАВИТЬ В БАЗУ</button>
     </div>
 
     <div class="table-wrapper">
         <table id="main-table">
             <thead>
                 <tr>
-                    <th>№ ID</th>
-                    <th>Источник</th>
-                    <th>Участок</th>
-                    <th>Обнаружено</th>
-                    <th>Адрес</th>
-                    <th>Характер</th>
-                    <th>План</th>
-                    <th>Срок</th>
-                    <th>Домов</th>
-                    <th>Тип</th>
-                    <th>Фото</th>
-                    <th>Действия</th>
+                    <th>№</th><th>Источник</th><th>ТК</th><th>Участок</th><th>Обнаруж.</th><th>Адрес</th><th>Характер</th><th>Дома</th><th>Соц.</th><th>Юр.</th><th>План</th><th>Срок</th><th>Факт</th><th>Фото</th><th>Действия</th>
                 </tr>
             </thead>
-            <tbody id="table-body"></tbody>
+            <tbody id="tb-body"></tbody>
         </table>
     </div>
 </div>
 
 <script>
-    // --- КОНФИГУРАЦИЯ FIREBASE ---
-    const firebaseConfig = {
-        databaseURL: "https://ktek-scada-default-rtdb.firebaseio.com/" // ТВОЙ URL ИЗ FIREBASE
-    };
+    const firebaseConfig = { databaseURL: "https://ktek-scada-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const rdb = firebase.database();
 
-    let currentUser = null; // admin, disp, master
+    let currentUser = null;
     let currentTab = 'act';
-    let currentPhotoId = null;
-    let lastBackupTime = localStorage.getItem('last_backup_v12') || Date.now();
+    let photoId = null;
 
-    // --- АВТОРИЗАЦИЯ ---
     function checkAuth() {
-        const pass = document.getElementById('pass-field').value;
-        if(pass === 'admin2026') currentUser = 'admin';
-        else if(pass === 'disp2026') currentUser = 'disp';
-        else if(pass === 'master2026') currentUser = 'master';
-        else return alert("Неверный пароль!");
+        const p = document.getElementById('pass-field').value;
+        if(p === 'admin2026') currentUser = 'admin';
+        else if(p === 'disp2026') currentUser = 'disp';
+        else if(p === 'master2026') currentUser = 'master';
+        else return alert("Пароль неверный!");
 
         document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('user-role').innerText = currentUser.toUpperCase();
+        document.getElementById('u-role').innerText = currentUser.toUpperCase();
+        if(currentUser === 'master') document.getElementById('input-block').style.display = 'none';
         
-        if(currentUser === 'admin' || currentUser === 'disp') {
-            document.getElementById('input-block').style.display = 'grid';
-        }
-        checkBackupLimit();
+        checkBackupLock();
         loadData();
     }
 
-    // --- ЛОГИКА БЭКАПА ---
-    function checkBackupLimit() {
-        if(currentUser === 'master') return;
-        let hoursSince = (Date.now() - lastBackupTime) / 3600000;
-        if(hoursSince > 12) {
+    function checkBackupLock() {
+        const last = localStorage.getItem('last_j_backup') || 0;
+        if(Date.now() - last > 12 * 3600000 && currentUser !== 'master') {
             document.getElementById('backup-lock').style.display = 'flex';
         }
     }
 
-    function forceBackup() {
-        rdb.ref('poryvy').once('value').then(snap => {
-            const data = JSON.stringify(snap.val(), null, 2);
-            const blob = new Blob([data], {type: "application/json"});
+    function exportDB(isForced = false) {
+        rdb.ref('poryvy').once('value').then(s => {
+            const blob = new Blob([JSON.stringify(s.val(), null, 2)], {type: "application/json"});
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
-            a.download = `KTEK_JOHNSON_BACKUP_${new Date().toLocaleDateString()}.json`;
+            a.download = `KTEK_JOHNSON_${new Date().toLocaleDateString()}.json`;
             a.click();
-            
-            lastBackupTime = Date.now();
-            localStorage.setItem('last_backup_v12', lastBackupTime);
-            document.getElementById('backup-lock').style.display = 'none';
-            alert("Архив скачан! Не забудьте переслать его на почту Zinenko_A_V!");
+            if(isForced) {
+                localStorage.setItem('last_j_backup', Date.now());
+                document.getElementById('backup-lock').style.display = 'none';
+            }
         });
     }
 
-    // --- РАБОТА С ДАННЫМИ ---
     function saveEntry() {
-        const newId = Date.now();
-        const entry = {
-            id: newId,
-            v2: document.getElementById('v2').value,
-            v4: document.getElementById('v4').value,
-            v3: document.getElementById('v3').value,
-            v5: document.getElementById('v5').value,
-            v7: document.getElementById('v7').value,
-            v8: document.getElementById('v8').value,
-            v13: document.getElementById('v13').value,
-            v14: document.getElementById('v14').value,
-            v10: document.getElementById('v10').value,
-            v9: document.getElementById('v9').value,
-            isOpres: document.getElementById('v-opres').checked,
-            status: 'act',
-            photos: []
+        const id = Date.now();
+        const data = {
+            id, status: 'act',
+            v2: document.getElementById('v2').value, v3: document.getElementById('v3').value,
+            v4: document.getElementById('v4').value, v5: document.getElementById('v5').value,
+            v7: document.getElementById('v7').value, v8: document.getElementById('v8').value,
+            v9: document.getElementById('v9').value, v10: document.getElementById('v10').value,
+            v11: document.getElementById('v11').value, v12: document.getElementById('v12').value,
+            v13: document.getElementById('v13').value, v14: document.getElementById('v14').value,
+            v15: document.getElementById('v15').value, v17: document.getElementById('v17').value,
+            v18: document.getElementById('v18').value,
+            isOpres: document.getElementById('is-opres').checked
         };
-        rdb.ref('poryvy/' + newId).set(entry);
-        alert("Запись добавлена в облако!");
+        rdb.ref('poryvy/' + id).set(data);
     }
 
     function loadData() {
-        rdb.ref('poryvy').on('value', snap => {
-            const all = snap.val() || {};
-            renderTable(all);
+        rdb.ref('poryvy').on('value', s => {
+            const data = s.val() || {};
+            render(data);
         });
     }
 
-    function renderTable(data) {
-        const tbody = document.getElementById('table-body');
-        tbody.innerHTML = '';
-        let counters = { act: 0, kap: 0, cls: 0 };
-
-        Object.values(data).forEach(item => {
-            counters[item.status]++;
+    function render(data) {
+        const body = document.getElementById('tb-body');
+        body.innerHTML = '';
+        let c = {act:0, kap:0, cls:0};
+        
+        Object.values(data).reverse().forEach(item => {
+            c[item.status]++;
             if(item.status !== currentTab) return;
 
-            let row = `<tr>
-                <td>#${String(item.id).slice(-4)}</td>
-                <td>${item.v2}</td>
-                <td>${item.v4}</td>
-                <td>${item.v5 ? item.v5.replace('T',' ') : '-'}</td>
-                <td style="text-align:left"><b>${item.v7}</b><br><small>${item.v3}</small></td>
-                <td>${item.v8}</td>
-                <td>${item.v13 || '-'}</td>
-                <td style="color:${isLate(item.v14)?'red':'black'}">${item.v14 || '-'}</td>
-                <td>${item.v10 || 0}</td>
-                <td>${item.isOpres ? '<span class="tag-opres">ОПРЕССОВКА</span>' : 'АВАРИЯ'}</td>
-                <td>
-                    <button class="btn-photo" onclick="openPhotos('${item.id}')">📸 ФОТО (${item.photos ? Object.keys(item.photos).length : 0})</button>
-                </td>
-                <td>
-                    ${getActionBtns(item)}
-                </td>
+            const row = `<tr>
+                <td>${String(item.id).slice(-4)}</td>
+                <td>${item.v2}</td><td>${item.v3}</td><td>${item.v4}</td>
+                <td>${(item.v5||'').replace('T',' ')}</td>
+                <td style="text-align:left"><b>${item.v7}</b> ${item.isOpres?'<span class="tag-opres">ОПРЕССОВКА</span>':''}</td>
+                <td>${item.v8}</td><td>${item.v10}</td><td>${item.v11}</td><td>${item.v12}</td>
+                <td>${item.v13}</td><td>${item.v14}</td><td>${(item.v15||'').replace('T',' ')}</td>
+                <td><button class="btn-photo" onclick="openPhotos('${item.id}')">📸 ФОТО (${item.photos?Object.keys(item.photos).length:0})</button></td>
+                <td>${getBtns(item)}</td>
             </tr>`;
-            tbody.insertAdjacentHTML('beforeend', row);
+            body.insertAdjacentHTML('beforeend', row);
         });
-
-        document.getElementById('c-act').innerText = counters.act;
-        document.getElementById('c-kap').innerText = counters.kap;
-        document.getElementById('c-cls').innerText = counters.cls;
+        document.getElementById('c-act').innerText = c.act;
+        document.getElementById('c-kap').innerText = c.kap;
+        document.getElementById('c-cls').innerText = c.cls;
     }
 
-    function isLate(dateStr) {
-        if(!dateStr) return false;
-        return new Date(dateStr) < new Date() && currentTab === 'act';
-    }
-
-    function getActionBtns(item) {
+    function getBtns(item) {
         if(currentUser === 'master') return '---';
-        if(currentTab === 'act') {
-            return `<button onclick="updateStatus('${item.id}', 'cls')" style="background:green; color:white; border:none; cursor:pointer;">ЗАКРЫТЬ</button>
-                    <button onclick="updateStatus('${item.id}', 'kap')" style="background:purple; color:white; border:none; cursor:pointer;">КАП.РЕМ</button>`;
-        }
-        return `<button onclick="updateStatus('${item.id}', 'act')">ВЕРНУТЬ</button>`;
+        if(currentTab === 'act') return `<button onclick="upd('${item.id}','cls')">✅</button><button onclick="upd('${item.id}','kap')">🚧</button>`;
+        return `<button onclick="upd('${item.id}','act')">↩️</button>`;
     }
 
-    function updateStatus(id, newStatus) {
-        rdb.ref('poryvy/' + id).update({ status: newStatus });
-    }
+    function upd(id, st) { rdb.ref('poryvy/'+id).update({status:st}); }
 
     function switchTab(t) {
         currentTab = t;
@@ -290,38 +242,26 @@
         loadData();
     }
 
-    // --- ФОТО ХРАНИЛИЩЕ ---
     function openPhotos(id) {
-        currentPhotoId = id;
+        photoId = id;
         document.getElementById('photo-viewer').style.display = 'block';
-        rdb.ref('poryvy/'+id+'/photos').on('value', snap => {
-            const gallery = document.getElementById('photo-display');
-            gallery.innerHTML = '';
-            const photos = snap.val() || {};
-            Object.values(photos).forEach(imgData => {
-                gallery.insertAdjacentHTML('beforeend', `<img src="${imgData}">`);
-            });
-            // Если мастер или больше 10 - скрываем загрузку
-            if(Object.keys(photos).length >= 10) document.getElementById('photo-upload-zone').style.display = 'none';
-            else document.getElementById('photo-upload-zone').style.display = 'block';
+        rdb.ref('poryvy/'+id+'/photos').on('value', s => {
+            const grid = document.getElementById('photo-display');
+            grid.innerHTML = '';
+            const phs = s.val() || {};
+            Object.values(phs).forEach(p => grid.insertAdjacentHTML('beforeend', `<img src="${p}">`));
+            if(Object.keys(phs).length >= 10 || currentUser === 'master') document.getElementById('upload-sec').style.display = 'none';
         });
     }
 
     function uploadPhoto() {
         const file = document.getElementById('file-input').files[0];
-        if(!file) return;
         const reader = new FileReader();
-        reader.onload = function(e) {
-            const base64 = e.target.result;
-            rdb.ref('poryvy/'+currentPhotoId+'/photos').push(base64);
-        };
+        reader.onload = e => rdb.ref('poryvy/'+photoId+'/photos').push(e.target.result);
         reader.readAsDataURL(file);
     }
 
-    function closePhotos() {
-        document.getElementById('photo-viewer').style.display = 'none';
-        rdb.ref('poryvy/'+currentPhotoId+'/photos').off();
-    }
+    function closePhotos() { document.getElementById('photo-viewer').style.display = 'none'; }
 </script>
 </body>
 </html>
